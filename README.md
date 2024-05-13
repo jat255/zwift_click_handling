@@ -42,8 +42,13 @@ output from pressing and releasing the plus button and then the minus button thr
            INFO     Minus button RELEASED                                                app.py:148
 ```
 
-In future iterations, these button presses will be translated into keyboard inputs (`+` / `-`) to control
-the shifting in indieVelo.
+These button presses are then translated into keyboard inputs (`+` / `-`), which will control virtual 
+shifting in indieVelo if the application has focus.
+
+**NB:** Because of limitations on the [`keyboard`](https://github.com/boppreh/keyboard/blob/master/keyboard/__init__.py#L90) library,
+if you want to send the plus/minus commands on Linux, you need to run this script as `root`. All caveats
+around that apply, namely, you should probably look at the code to make sure it's not doing something naughty
+before running random scripts as `root`.
 
 ## Running the code
 

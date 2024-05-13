@@ -7,18 +7,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+import blackboxprotobuf as bbpb
+import keyboard
 from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric.ec import (
+    ECDH, SECP256R1, EllipticCurvePublicKey, generate_private_key)
+from cryptography.hazmat.primitives.ciphers.aead import AESCCM
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from dotenv import load_dotenv
 from rich.logging import RichHandler
-import blackboxprotobuf as bbpb
-
-from cryptography.hazmat.primitives.asymmetric.ec import \
-    generate_private_key, SECP256R1, ECDH, EllipticCurvePublicKey
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives.ciphers.aead import AESCCM
 
 import characteristics as char
 import constants as const
@@ -144,8 +144,18 @@ class ClickBLE:
                 self.button_up_pressed = data_dict['1'] == 0
                 if self.button_up_pressed != self.last_button_up_pressed:
                     self.logger.info(f"Plus button {'PRESSED' if self.button_up_pressed else 'RELEASED'}")
+                    # send plus key when button is released
+                    try:
+                        if not self.button_up_pressed: keyboard.press_and_release('shift+plus')
+                    except ImportError:
+                        self.logger.error('Replicating key presses requires root privileges in Linux. Re-run this script as root to get those working')
                 if self.button_down_pressed != self.last_button_down_pressed:
                     self.logger.info(f"Minus button {'PRESSED' if self.button_down_pressed else 'RELEASED'}")
+                    # send minus key when button is released
+                    try:
+                        if not self.button_down_pressed: keyboard.press_and_release('minus')
+                    except ImportError:
+                        self.logger.error('Replicating key presses requires root privileges in Linux. Re-run this script as root to get those working')
         
     def decrypt(self, counter_bytes: bytearray, payload_bytes: bytearray, tag_bytes: bytearray):
         if not self.encrypted:
