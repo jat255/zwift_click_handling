@@ -27,8 +27,12 @@ BATTERY_LEVEL_TYPE = bytes([25])
 # not figured out the protobuf type this really is, the content is just two varints.
 CLICK_NOTIFICATION_MESSAGE_TYPE = bytes([55])
 
-# see this if connected to Core then Zwift connects to it. just one byte
-DISCONNECT_MESSAGE_TYPE = bytes([0xFE])
+types = {
+    int.to_bytes(7): "CONTROLLER_NOTIFICATION_MESSAGE_TYPE", 
+    int.to_bytes(21): "EMPTY_MESSAGE_TYPE", 
+    int.to_bytes(25): "BATTERY_LEVEL_TYPE", 
+    int.to_bytes(55): "CLICK_NOTIFICATION_MESSAGE_TYPE"
+}
 
 # encryption details
 KEY_LENGTH = 32

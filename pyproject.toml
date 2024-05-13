@@ -12,6 +12,8 @@ python-dotenv = "^1.0.1"
 bleak = "^0.22.1"
 rich = "^13.7.1"
 cryptography = "^42.0.7"
+protobuf = "^5.26.1"
+bbpb = "^1.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
