@@ -1,11 +1,13 @@
+import argparse
 import asyncio
 import json
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
-from bleak import BleakClient
+from bleak import BleakClient, BleakScanner
 from bleak.backends.characteristic import BleakGATTCharacteristic
 from dotenv import load_dotenv
 from rich.logging import RichHandler
@@ -33,18 +35,20 @@ logging.basicConfig(
 )
 sub_level = logging.WARNING
 logging.getLogger('urllib3.connectionpool').setLevel(sub_level)
-logging.getLogger('pygatt').setLevel(sub_level)
 logging.getLogger('bleak.backends').setLevel(sub_level)
 
 _logger.info(f"Set up logging @ \"{datetime.now().astimezone().isoformat()}\"")
 
 class ClickBLE:
 
-    def __init__(self, mac_address: str, encrypted: bool):
+    def __init__(self, mac_address: Optional[str], encrypted: bool, verbose: bool = False):
         self.logger = logging.getLogger('ClickBLE')
+        if verbose:
+            self.logger.setLevel(logging.DEBUG)
+            logging.getLogger('bleak.backends').setLevel(logging.DEBUG)
         self.logger.info(f"Setting up BLE client {'**WITH**' if encrypted else '**WITHOUT**'} encryption")
-        self.logger.info(f'Using MAC of "{mac_address}"')
         self.mac = mac_address
+        self.logger.info(f'Using MAC of "{mac_address}"')
         self.encrypted = encrypted
         self.button_up_pressed = False
         self.button_down_pressed = False
@@ -74,6 +78,21 @@ class ClickBLE:
             self.public_bytes = b''
             self.shared_key_bytes = b''
             self.iv_bytes = bytearray()
+            
+    async def search_for_click(self):
+        """
+        Use Bleak to search for a Zwift click within range
+        """
+        # async with BleakScanner(
+        #     lambda dev, ad_data: self.logger.info(f"Device: {dev}, Advertisement Data: {ad_data}"),
+        # ) as scanner:
+        self.logger.info('Scanning for Click... (10 second timeout)')
+        dev = await BleakScanner.find_device_by_name(name="Zwift Click")
+        if dev:
+            self.mac = dev.address
+            self.logger.info(f"Found Click device with MAC \"{self.mac}\"")
+        else:
+            raise ValueError('Could not find device; make sure to put the Click in "connecting" mode')
         
     def notification_handler(self, characteristic: BleakGATTCharacteristic, data: bytearray):
         """Simple notification handler which prints the data received."""
@@ -91,7 +110,6 @@ class ClickBLE:
             self.logger.debug(f"tag_bytes: {tag_bytes}")
             response = self.decrypt(counter_bytes, payload_bytes, tag_bytes) 
         else:
-            response = data
             type = bytes(data[:1])
             payload = bytes(data[1:])
             pb_tuple = bbpb.protobuf_to_json(payload)
@@ -99,7 +117,7 @@ class ClickBLE:
             self.logger.debug(f'Message type is "{const.types[type]}"')
             self.logger.debug(f'Message data is {data_dict}')
             if type == const.BATTERY_LEVEL_TYPE:
-                pass
+                self.logger.info(f'Current battery level is {data_dict['2']}')
             elif type == const.CLICK_NOTIFICATION_MESSAGE_TYPE:
                 """
                 appears that the message will have two keys for each button
@@ -119,7 +137,7 @@ class ClickBLE:
                 {'1': 1, '2': 1}   // this is the release of the button
                 {'1': 1, '2': 1}
                 """
-                # there's a better way to handle this, but I'm lazy...
+                # there's probably a better way to handle this, but I'm lazy...
                 self.last_button_up_pressed = self.button_up_pressed
                 self.last_button_down_pressed = self.button_down_pressed
                 self.button_down_pressed = data_dict['2'] == 0
@@ -197,7 +215,9 @@ class ClickBLE:
             self.logger.error(f'{label} Could not read characteristic "{char}": {e}')
 
     async def read_chars(self):
-        async with BleakClient(self.mac) as client:
+        if not self.mac:
+            await click.search_for_click()
+        async with BleakClient(str(self.mac)) as client:
             self.logger.debug("Reading characteristics")
                 
             # device characteristc not found on linux for some reason...
@@ -209,7 +229,12 @@ class ClickBLE:
             await self.try_read_char("Firmware Revision:", char.FIRMWARE_REVISION_STRING_CHARACTERISTIC_UUID, client)
 
     async def write_handshake(self):
-        async with BleakClient(self.mac) as client:
+        if not self.mac:
+            await click.search_for_click()
+            
+        self.logger.info('Waiting for device to be visible; please press a button on the Click if it is not '
+                         'already in "connecting" mode (pulsing blue light)')
+        async with BleakClient(str(self.mac)) as client:
             self.logger.debug('Subscribing to characteristics')
             await client.start_notify(char.SERVICE_CHANGED_CHARACTERISTIC_UUID, self.notification_handler)
             await client.start_notify(char.ZWIFT_ASYNC_CHARACTERISTIC_UUID, self.async_notification_handler)
@@ -218,7 +243,7 @@ class ClickBLE:
             await client.start_notify(char.BATTERY_LEVEL_CHARACTERISTIC_UUID, self.battery_notification_handler)
             
 
-            self.logger.info(f"Starting handshake")
+            self.logger.info(f"Click device found; Starting connection handshake")
             if self.encrypted:
                 pub_key = const.RIDE_ON + const.REQUEST_START + self.public_bytes[1:]
             else:
@@ -229,19 +254,30 @@ class ClickBLE:
                 pub_key, 
                 response=True
             )
-            self.logger.info(f"Finished handshake; waiting for input")
-            await asyncio.sleep(100)
+            self.logger.info(f"Finished handshake; waiting for input (press `Ctrl-C` to exit)")
+            while True:
+                await asyncio.sleep(1)
 
-MAC = os.environ.get('CLICK_MAC_ADDRESS')
-if not MAC:
-    raise EnvironmentError('"CLICK_MAC_ADDRESS" must be defined')
-ENCRYPTION = os.environ.get('ADT_email_send', str(False)).lower() == 'true'
+parser = argparse.ArgumentParser()
+parser.add_argument("-v", help="increase output verbosity", action='store_true')
+parser.add_argument(
+    'mac_address', 
+    nargs='?',
+    default=os.environ.get('CLICK_MAC_ADDRESS', None),
+    help="The MAC address of the Zwift Click device to use. If not supplied, " + \
+         "the \"CLICK_MAC_ADDRESS\" environment variable will be used. If that is " + \
+         "not provided, the code will perform a Bluetooth search for any Zwift Click " + \
+         "broadcasting in range."
+)
+args = parser.parse_args()
 
-click = ClickBLE(MAC, encrypted=ENCRYPTION)
+MAC = args.mac_address
+ENCRYPTION = os.environ.get('USE_ENCRYPTION', str(False)).lower() == 'true'
+
+click = ClickBLE(MAC, encrypted=ENCRYPTION, verbose=args.v)
 
 try:
     # asyncio.run(click.read_chars())
     asyncio.run(click.write_handshake())
 except Exception as e:
-    _logger.error(f"Error getting data from click")
     _logger.exception(e)
