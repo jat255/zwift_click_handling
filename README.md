@@ -73,7 +73,7 @@ before running random scripts as `root`.
 
 ### Demo video
 
-
+https://github.com/jat255/zwift_click_handling/assets/1278301/f5349b74-b5bb-481e-b7fc-d72df7a23dc8
 
 ## Disclaimers
 
