@@ -1,0 +1,21 @@
+[Zwift Click]# [NEW] Primary Service (Handle 0x0000)	00001801-0000-1000-8000-00805f9b34fb	Generic Attribute Profile
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00002a05-0000-1000-8000-00805f9b34fb	Service Changed
+[Zwift Click]# [NEW] Descriptor (Handle 0x0000)	        00002902-0000-1000-8000-00805f9b34fb	Client Characteristic Configuration
+[Zwift Click]# [NEW] Primary Service (Handle 0x0000)	0000180a-0000-1000-8000-00805f9b34fb	Device Information
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00002a29-0000-1000-8000-00805f9b34fb	Manufacturer Name String
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00002a25-0000-1000-8000-00805f9b34fb	Serial Number String
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00002a27-0000-1000-8000-00805f9b34fb	Hardware Revision String
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00002a26-0000-1000-8000-00805f9b34fb	Firmware Revision String
+[Zwift Click]# [NEW] Primary Service (Handle 0x0000)	00000001-19ca-4651-86e5-fa29dcdd09d1	Vendor specific
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00000002-19ca-4651-86e5-fa29dcdd09d1	Vendor specific
+[Zwift Click]# [NEW] Descriptor (Handle 0x0000)	        00002902-0000-1000-8000-00805f9b34fb	Client Characteristic Configuration
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00000003-19ca-4651-86e5-fa29dcdd09d1	Vendor specific
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00000004-19ca-4651-86e5-fa29dcdd09d1	Vendor specific
+[Zwift Click]# [NEW] Descriptor (Handle 0x0000)	        00002902-0000-1000-8000-00805f9b34fb	Client Characteristic Configuration
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00000005-19ca-4651-86e5-fa29dcdd09d1	Vendor specific
+[Zwift Click]# [NEW] Descriptor (Handle 0x0000)	        00002902-0000-1000-8000-00805f9b34fb	Client Characteristic Configuration
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00000006-19ca-4651-86e5-fa29dcdd09d1	Vendor specific
+[Zwift Click]# [NEW] Descriptor (Handle 0x0000) 	00002902-0000-1000-8000-00805f9b34fb	Client Characteristic Configuration
+[Zwift Click]# [NEW] Primary Service (Handle 0x0000)	0000180f-0000-1000-8000-00805f9b34fb	Battery Service
+[Zwift Click]# [NEW] Characteristic (Handle 0x0000)	00002a19-0000-1000-8000-00805f9b34fb	Battery Level
+[Zwift Click]# [NEW] Descriptor (Handle 0x0000)	        00002902-0000-1000-8000-00805f9b34fb	Client Characteristic Configuration
