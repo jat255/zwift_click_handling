@@ -146,14 +146,14 @@ class ClickBLE:
                     self.logger.info(f"Plus button {'PRESSED' if self.button_up_pressed else 'RELEASED'}")
                     # send plus key when button is released
                     try:
-                        if not self.button_up_pressed: keyboard.press_and_release('shift+plus')
+                        if not self.button_up_pressed: keyboard.press_and_release('num plus')
                     except ImportError:
                         self.logger.error('Replicating key presses requires root privileges in Linux. Re-run this script as root to get those working')
                 if self.button_down_pressed != self.last_button_down_pressed:
                     self.logger.info(f"Minus button {'PRESSED' if self.button_down_pressed else 'RELEASED'}")
                     # send minus key when button is released
                     try:
-                        if not self.button_down_pressed: keyboard.press_and_release('minus')
+                        if not self.button_down_pressed: keyboard.press_and_release('num minus')
                     except ImportError:
                         self.logger.error('Replicating key presses requires root privileges in Linux. Re-run this script as root to get those working')
         
@@ -245,11 +245,16 @@ class ClickBLE:
         self.logger.info('Waiting for device to be visible; please press a button on the Click if it is not '
                          'already in "connecting" mode (pulsing blue light)')
         async with BleakClient(str(self.mac)) as client:
-            self.logger.debug('Subscribing to characteristics')
-            await client.start_notify(char.SERVICE_CHANGED_CHARACTERISTIC_UUID, self.notification_handler)
+            # self.logger.debug('Subscribing to characteristics')
+            # for some reason, received "Permission denied" on this characteristic in Windows, but don't need it anyway
+            # await client.start_notify(char.SERVICE_CHANGED_CHARACTERISTIC_UUID, self.notification_handler)
+            self.logger.debug('Subscribing to ZWIFT_ASYNC_CHARACTERISTIC_UUID')
             await client.start_notify(char.ZWIFT_ASYNC_CHARACTERISTIC_UUID, self.async_notification_handler)
+            self.logger.debug('Subscribing to ZWIFT_SYNC_TX_CHARACTERISTIC_UUID')
             await client.start_notify(char.ZWIFT_SYNC_TX_CHARACTERISTIC_UUID, self.process_characteristic)
+            self.logger.debug('Subscribing to ZWIFT_UNKNOWN_6_CHARACTERISTIC_UUID')
             await client.start_notify(char.ZWIFT_UNKNOWN_6_CHARACTERISTIC_UUID, self.notification_handler)
+            self.logger.debug('Subscribing to BATTERY_LEVEL_CHARACTERISTIC_UUID')
             await client.start_notify(char.BATTERY_LEVEL_CHARACTERISTIC_UUID, self.battery_notification_handler)
             
 
